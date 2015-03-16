@@ -35,7 +35,10 @@ GNU General Public License for more details.
 #include "map/QGearsWalkmeshFileManager.h"
 #include "data/FF7ModelListFileManager.h"
 #include "data/QGearsLGPArchiveFactory.h"
+#include "data/QGearsTriggersFile.h"
+#include "data/QGearsMapListFile.h"
 #include "common/make_unique.h"
+#include "qgears_version.h"
 
 template<> QGears::Application *Ogre::Singleton<QGears::Application>::msSingleton = nullptr;
 
@@ -278,6 +281,8 @@ namespace QGears
         m_resource_managers.emplace_back( std::make_shared<QGears::LZSFLevelFileManager>() );
         m_resource_managers.emplace_back( std::make_shared<QGears::BackgroundFileManager>() );
         m_resource_managers.emplace_back( std::make_shared<QGears::Background2DFileManager>() );
+        m_resource_managers.emplace_back(std::make_shared<QGears::TriggersFileManager>());
+        m_resource_managers.emplace_back(std::make_shared<QGears::MapListFileManager>());
     }
 
     //--------------------------------------------------------------------------

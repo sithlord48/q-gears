@@ -37,11 +37,11 @@ namespace QGears
     const String        BackgroundFileSerializer::SECTION_NAME_BACK   ("BACK");
     const String        BackgroundFileSerializer::SECTION_NAME_TEXTURE("TEXTURE");
     const String        BackgroundFileSerializer::TAG_FILE_END        ("END");
-    const Ogre::Real    BackgroundFileSerializer::unknown_24_SCALE( 10000000.0 );
+    const Ogre::Real    BackgroundFileSerializer::src_big_SCALE( 10000000.0 );
 
     //---------------------------------------------------------------------
     BackgroundFileSerializer::BackgroundFileSerializer() :
-        Serializer()
+        Serializer(), m_layer_index(BackgroundFile::LAYER_COUNT)
     {
     }
 
@@ -150,6 +150,7 @@ namespace QGears
             readShorts( stream, pDest->unknown_0E, 4 );
         }
         stream->skip( 2 * 2 ); // 2 * uint16 unused;
+        m_layer_index = layer_index;
         readVector( stream, pDest->sprites, sprite_count );
     }
 
@@ -160,28 +161,66 @@ namespace QGears
         readObject( stream, pDest.dst );
         readShorts( stream, pDest.unknown_04, 2 );
         readObject( stream, pDest.src );
-        readShorts( stream, pDest.unknown_0C, 4 );
+        readObject( stream, pDest.src2 );
+        readShort( stream, pDest.width );
+        readShort( stream, pDest.height );
+
+        uint16 size;
+        // width and height are sometimes incorrect in the file
+        if ( m_layer_index < 2 )
+        {
+            size = 16;
+        }
+        else if ( m_layer_index < BackgroundFile::LAYER_COUNT)
+        {
+            size = 32;
+        }
+        else
+        {
+            OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS
+                ,"m_layer_index not set correctly"
+                ,"BackgroundFileSerializer::readObject" );
+        }
+        pDest.width = pDest.height = size;
 
         readShort( stream, pDest.palette_page );
         readShort( stream, pDest.depth );
 
-        stream->read( pDest.flags_18, sizeof( pDest.flags_18 ) );
-        uint8 flags[2];
-        stream->read( flags, sizeof( flags ) );
-        pDest.flags_20[0] = flags[0] > 0;
-        pDest.flags_20[1] = flags[1] > 0;
+        // Force depth values
+        switch ( m_layer_index )
+        {
+          case 0:
+            pDest.depth = 4095;
+            break;
+          case 2:
+            pDest.depth = 4096;
+            break;
+          case 3:
+            pDest.depth = 0;
+            break;
+        }
 
-        readShort( stream, pDest.unknown_1C );
+        uint8 animation[2];
+        stream->read( animation, sizeof( animation ) );
+        pDest.animation_id = animation[0];
+        pDest.animation_frame = animation[1];
+        uint8 has_blending[2];
+        stream->read( has_blending, sizeof( has_blending ) );
+        pDest.has_blending[0] = has_blending[0] > 0;
+        pDest.has_blending[1] = has_blending[1] > 0;
+
+        readShort( stream, pDest.blending );
         readShort( stream, pDest.data_page );
         readShort( stream, pDest.data_page2 );
         // when data_page2 != 0, it must be used instead of data_page
         if ( pDest.data_page2 )
         {
+            pDest.src = pDest.src2;
             pDest.data_page = pDest.data_page2;
         }
-        readShort( stream, pDest.colourDepth );
-        readObject( stream, pDest.unknown_24 );
-        pDest.unknown_24 /= unknown_24_SCALE;
+        readShort( stream, pDest.colour_depth );
+        readObject( stream, pDest.src_big );
+        pDest.src_big /= src_big_SCALE;
         stream->skip( 2 * 2 ); // 2 * uint16 unused
     }
 

@@ -27,8 +27,8 @@ Console::Console():
     m_CursorPosition(0),
     m_CursorBlinkTime(0),
 
-    m_HistoryLine(-1),
-    m_HistorySize(32),
+    m_HistoryLineCycleIndex(-1),
+    m_MaxHistorySize(32),
 
     m_AutoCompletitionLine(0)
 {
@@ -51,17 +51,56 @@ Console::Console():
 
     LOG_TRIVIAL("Created console width " + Ogre::StringConverter::toString(m_ConsoleWidth) + ", height " + Ogre::StringConverter::toString(m_ConsoleHeight));
 
-    // add as frame and log listner
+    // add as frame and log listener
     Ogre::LogManager::getSingleton().getDefaultLog()->addListener(this);
+
+    LoadHistory();
 }
 
 
 Console::~Console()
 {
-    // remove as listner
+    // remove as listener
     Ogre::LogManager::getSingleton().getDefaultLog()->removeListener(this);
+    SaveHistory();
 }
 
+void Console::LoadHistory()
+{
+    LOG_TRIVIAL("Loading console_history.txt ...");
+
+    std::ifstream file("console_history.txt");
+    std::string historyLine;
+    while (std::getline(file, historyLine))
+    {
+        AddToHistory(historyLine);
+    }
+    std::reverse(m_History.begin(), m_History.end());
+}
+
+void Console::SaveHistory()
+{
+    std::ofstream file("console_history.txt");
+    if (!file.is_open())
+    {
+        LOG_ERROR("Failed to open console_history.txt for writing");
+        return;
+    }
+    for (auto& historyLine : m_History)
+    {
+        file << historyLine << "\r\n";
+    }
+}
+
+void Console::AddToHistory(const Ogre::String& history)
+{
+    if (m_History.size() >= m_MaxHistorySize)
+    {
+        m_History.pop_back();
+    }
+    m_History.push_front(history);
+    m_HistoryLineCycleIndex = -1;
+}
 
 void
 Console::Input(const QGears::Event& event)
@@ -78,7 +117,7 @@ Console::Input(const QGears::Event& event)
     }
 
     // input command
-    else if (event.type == QGears::ET_KEY_PRESS && event.param1 == OIS::KC_RETURN && m_InputLine.size())
+    else if (event.type == QGears::ET_KEY_PRESS && (event.param1 == OIS::KC_RETURN || event.param1 == OIS::KC_NUMPADENTER) && m_InputLine.size())
     {
         if(m_AutoCompletition.size() > 0)
         {
@@ -118,20 +157,20 @@ Console::Input(const QGears::Event& event)
         SetToHide();
     }
     // history up
-    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT) && event.param1 == OIS::KC_UP)
+    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT_WAIT) && event.param1 == OIS::KC_UP)
     {
-        if(m_HistoryLine < (int)m_History.size() - 1)
+        if(m_HistoryLineCycleIndex < (int)m_History.size() - 1)
         {
-            ++m_HistoryLine;
+            ++m_HistoryLineCycleIndex;
             SetInputLineFromHistory();
         }
     }
     // history down
-    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT) && event.param1 == OIS::KC_DOWN)
+    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT_WAIT) && event.param1 == OIS::KC_DOWN)
     {
-        if(m_HistoryLine > 0)
+        if(m_HistoryLineCycleIndex > 0)
         {
-            --m_HistoryLine;
+            --m_HistoryLineCycleIndex;
             SetInputLineFromHistory();
         }
     }
@@ -153,7 +192,7 @@ Console::Input(const QGears::Event& event)
 
     }
     // scroll display to previous row
-    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT) && event.param1 == OIS::KC_PGUP)
+    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT_WAIT) && event.param1 == OIS::KC_PGUP)
     {
         if(m_DisplayLine > 0)
         {
@@ -161,7 +200,7 @@ Console::Input(const QGears::Event& event)
         }
     }
     // scroll display to next row
-    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT) && event.param1 == OIS::KC_PGDOWN)
+    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT_WAIT) && event.param1 == OIS::KC_PGDOWN)
     {
         if(m_DisplayLine < m_OutputLine.size())
         {
@@ -169,7 +208,7 @@ Console::Input(const QGears::Event& event)
         }
     }
     // delete character after cursor
-    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT) && event.param1 == OIS::KC_DELETE)
+    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT_WAIT) && event.param1 == OIS::KC_DELETE)
     {
         if(m_AutoCompletition.size() > 0)
         {
@@ -184,7 +223,7 @@ Console::Input(const QGears::Event& event)
         }
     }
     // delete character before cursor
-    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT) && event.param1 == OIS::KC_BACK)
+    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT_WAIT) && event.param1 == OIS::KC_BACK)
     {
         if(m_AutoCompletition.size() > 0)
         {
@@ -200,7 +239,7 @@ Console::Input(const QGears::Event& event)
         }
     }
     // move cursor to left
-    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT) && event.param1 == OIS::KC_LEFT)
+    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT_WAIT) && event.param1 == OIS::KC_LEFT)
     {
         if(m_AutoCompletition.size() > 0)
         {
@@ -214,7 +253,7 @@ Console::Input(const QGears::Event& event)
         }
     }
     // move cursor to right
-    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT) && event.param1 == OIS::KC_RIGHT)
+    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT_WAIT) && event.param1 == OIS::KC_RIGHT)
     {
         if(m_AutoCompletition.size() > 0)
         {
@@ -256,11 +295,12 @@ Console::Input(const QGears::Event& event)
         m_CursorPosition = m_InputLine.size();
     }
     // input ascii character
-    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT) && m_InputLine.size() < m_LineWidth)
+    else if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT_WAIT) && m_InputLine.size() < m_LineWidth)
     {
-        char legalchars[] = "ABCDEFGHIJKLMNOPQRSTUVWXUZabcdefghijklmnopqrstuvwxyz1234567890~!@#$%^&*()-_=+?{[]}|\\;:'\"<>,./? ";
-        char txt = static_cast<char>(event.param2);
-        for(unsigned int c = 0; c < sizeof(legalchars ) - 1; ++c)
+        char legalchars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890~!@#$%^&*()-_=+?{[]}|\\;:'\"<>,./? ";
+        char txt = TranslateNumpad(event);
+
+        for (unsigned int c = 0; c < sizeof(legalchars) - 1; ++c)
         {
             if(legalchars[c] == txt)
             {
@@ -274,6 +314,45 @@ Console::Input(const QGears::Event& event)
     }
 }
 
+
+char
+Console::TranslateNumpad(const QGears::Event& event)
+{
+    switch (static_cast<int>(event.param1))
+    {
+    case OIS::KC_NUMPAD0:
+        return '0';
+    case OIS::KC_NUMPAD1:
+        return '1';
+    case OIS::KC_NUMPAD2:
+        return '2';
+    case OIS::KC_NUMPAD3:
+        return '3';
+    case OIS::KC_NUMPAD4:
+        return '4';
+    case OIS::KC_NUMPAD5:
+        return '5';
+    case OIS::KC_NUMPAD6:
+        return '6';
+    case OIS::KC_NUMPAD7:
+        return '7';
+    case OIS::KC_NUMPAD8:
+        return '8';
+    case OIS::KC_NUMPAD9:
+        return '9';
+    case OIS::KC_DECIMAL:
+        return '.';
+    case OIS::KC_ADD:
+        return '+';
+    case OIS::KC_SUBTRACT:
+        return '-';
+    case OIS::KC_MULTIPLY:
+        return '*';
+    case OIS::KC_DIVIDE:
+        return '/';
+    }
+    return static_cast<char>(event.param2);
+}
 
 void
 Console::Update()
@@ -736,12 +815,7 @@ Console::ResetAutoCompletion()
 void
 Console::AddInputToHistory()
 {
-    if(m_History.size() >= m_HistorySize)
-    {
-        m_History.pop_back();
-    }
-    m_History.push_front(m_InputLine);
-    m_HistoryLine = -1;
+    AddToHistory(m_InputLine);
 }
 
 
@@ -753,7 +827,7 @@ Console::SetInputLineFromHistory()
     std::list<Ogre::String>::iterator i = m_History.begin();
     for(int count = 0; i != m_History.end(); ++i, ++count)
     {
-        if(count == m_HistoryLine)
+        if(count == m_HistoryLineCycleIndex)
         {
             m_InputLine = (*i);
             m_CursorPosition = m_InputLine.size();

@@ -57,7 +57,7 @@ ScriptManager::~ScriptManager()
 void
 ScriptManager::Input(const QGears::Event& event)
 {
-    if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT) &&
+    if ((event.type == QGears::ET_KEY_PRESS || event.type == QGears::ET_KEY_REPEAT_WAIT) &&
                                       (
                                         event.param1 == OIS::KC_RETURN ||
                                         event.param1 == OIS::KC_ESCAPE ||
@@ -76,7 +76,7 @@ ScriptManager::Input(const QGears::Event& event)
             {
                 argument2 = "Press";
             }
-            else if (event.type == QGears::ET_KEY_REPEAT)
+            else if (event.type == QGears::ET_KEY_REPEAT_WAIT)
             {
                 argument2 = "Repeat";
             }
@@ -284,9 +284,20 @@ ScriptManager::Update(const ScriptManager::Type type)
 void
 ScriptManager::RunString(const Ogre::String& lua)
 {
+    int preEvalIndex = lua_gettop(m_LuaState);
     if(luaL_dostring(m_LuaState, lua.c_str()) == 1)
     {
         LOG_ERROR(Ogre::String(lua_tostring(m_LuaState, -1)));
+    }
+    else
+    {
+        int index = lua_gettop(m_LuaState);
+        if (index > 0 && index != preEvalIndex)
+        {
+            auto str = lua_tostring(m_LuaState, index);
+            LOG_CONSOLE(str != nullptr ? str : "(nullptr; try tostring(...)?)");
+            lua_pop(m_LuaState, 1);
+        }
     }
 }
 

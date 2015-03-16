@@ -65,23 +65,27 @@ namespace QGears
         struct SpriteData
         {
             Pixel dst;
-            uint16 unknown_04[2];
+            uint16 unknown_04[2]; // Unused
             Pixel src;
-            uint16 unknown_0C[4];
+            Pixel src2; // used for special effects pages, when data_page2 != 0, it must be used instead of src
+            uint16 width;
+            uint16 height;
 
             uint16 palette_page;
-            uint16 depth;
-            uint8  flags_18[2];
-            bool   flags_20[2];
-            uint16 unknown_1C; // maybe some 'mode'
+            uint16 depth; // <=> Z
+            uint8  animation_id;
+            uint8  animation_frame;
+            bool   has_blending[2];
+            uint16 blending;
             uint16 data_page;
             uint16 data_page2; // used for special effects pages, when data_page2 != 0, it must be used instead of data_page
-            uint16 colourDepth;
-            Ogre::Vector3 unknown_24;
+            uint16 colour_depth; // Use texture page depth instead
+            Ogre::Vector3 src_big; // For PC use (z = unknown, x = srcX / 16 * 625000, y = srcY / 16 * 625000)
         };
 
 
         typedef std::vector<SpriteData> SpriteList;
+        typedef std::vector<SpriteData*> SpritePtrList;
 
         struct Layer
         {
@@ -115,9 +119,9 @@ namespace QGears
         std::array<uint8, PALETTE_ENTRY_COUNT>& getPalette(void) { return m_palette; }
         std::array<Page, PAGE_COUNT>&  getPages(void) { return m_pages; }
 
-        virtual Ogre::Image*        createImage     ( const PaletteFilePtr &palette ) const;
+        Ogre::Image*        createImage     ( const PaletteFilePtr &palette );
 
-        virtual void addAllSprites( SpriteList& sprites ) const;
+        void addAllSprites( SpritePtrList& sprites ) ;
 
     protected:
         virtual void loadImpl();

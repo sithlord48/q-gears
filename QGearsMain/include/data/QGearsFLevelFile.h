@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include "QGearsCameraMatrixFile.h"
 #include "QGearsPaletteFile.h"
 #include "QGearsHRCFile.h"
+#include "QGearsTriggersFile.h"
 
 namespace QGears
 {
@@ -61,18 +62,21 @@ namespace QGears
 
         static const String RESOURCE_TYPE;
 
-        std::vector<u8> getRawScript();
-        const BackgroundFilePtr&    getBackground  ( void ) const;
-        const CameraMatrixFilePtr&  getCameraMatrix( void ) const;
-        const ModelListFilePtr&     getModelList   ( void ) const;
-        const PaletteFilePtr&       getPalette     ( void ) const;
-        const WalkmeshFilePtr&      getWalkmesh    ( void ) const;
+        const std::vector<u8>&      getRawScript() const;
+        const BackgroundFilePtr&    getBackground() const;
+        const CameraMatrixFilePtr&  getCameraMatrix() const;
+        const ModelListFilePtr&     getModelList() const;
+        const PaletteFilePtr&       getPalette() const;
+        const WalkmeshFilePtr&      getWalkmesh() const;
+        const TriggersFilePtr&      getTriggers() const;
 
+        void setRawScript(const std::vector<u8>& scriptData);
         void setBackground  ( const BackgroundFilePtr      &background    );
         void setCameraMatrix( const CameraMatrixFilePtr    &camera_matrix );
         void setModelList   ( const ModelListFilePtr       &model_list    );
         void setPalette     ( const PaletteFilePtr         &palette       );
         void setWalkmesh    ( const WalkmeshFilePtr        &walkmesh      );
+        void setTriggers(const TriggersFilePtr& triggers);
 
         String getBackground2DName( void ) const;
         String getBackgroundTextureName( void ) const;
@@ -99,6 +103,8 @@ namespace QGears
         ModelListFilePtr            m_model_list;
         PaletteFilePtr              m_palette;
         WalkmeshFilePtr             m_walkmesh;
+        TriggersFilePtr             m_triggers;
+        std::vector<u8>             m_rawScript;
 
         FLevelTextureLoader        *m_background_texture_loader;
         Ogre::TexturePtr            m_background_texture;

@@ -162,6 +162,7 @@ namespace QGears
         m_model_list.setNull();
         m_walkmesh.setNull();
         m_hrc_files.clear();
+        m_triggers.setNull();
     }
 
     //--------------------------------------------------------------------------
@@ -179,10 +180,9 @@ namespace QGears
         return 0;
     }
 
-    std::vector<u8> FLevelFile::getRawScript()
+    const std::vector<u8>& FLevelFile::getRawScript() const
     {
-        // TODO
-        return std::vector<u8>();
+        return m_rawScript;
     }
 
     //--------------------------------------------------------------------------
@@ -190,6 +190,11 @@ namespace QGears
     FLevelFile::getBackground( void ) const
     {
         return m_background;
+    }
+
+    void FLevelFile::setRawScript(const std::vector<u8>& scriptData)
+    {
+        m_rawScript = scriptData;
     }
 
     //--------------------------------------------------------------------------
@@ -248,11 +253,21 @@ namespace QGears
         return m_walkmesh;
     }
 
+    const TriggersFilePtr& FLevelFile::getTriggers() const
+    {
+        return m_triggers;
+    }
+
     //--------------------------------------------------------------------------
     void
     FLevelFile::setWalkmesh( const WalkmeshFilePtr &walkmesh )
     {
         m_walkmesh = walkmesh;
+    }
+
+    void FLevelFile::setTriggers(const TriggersFilePtr& triggers)
+    {
+        m_triggers = triggers;
     }
 
     //--------------------------------------------------------------------------

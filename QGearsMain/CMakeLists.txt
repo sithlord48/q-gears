@@ -98,6 +98,10 @@ set(HEADER_FILES
   include/core/XmlScriptsFile.h
   include/core/XmlTextFile.h
   include/core/XmlTextsFile.h
+  include/core/DialogsManager.h
+  include/core/ScriptManagerBinds.h
+  include/core/TextManager.h
+  include/core/TextManagerCommands.h
   #include/viewer/ViewerModule.h
   include/data/QGearsXMLSerializer.h
 )
@@ -148,6 +152,8 @@ include/data/worldmap/MapFile.h
   include/data/QGearsSerializer.h
   include/data/QGearsTexCodec.h
   include/data/QGearsTexFile.h
+  include/data/QGearsTriggersFile.h
+  include/data/QGearsMapListFile.h
 )
 
 set(SOURCE_FILES_DATA
@@ -196,7 +202,8 @@ set(SOURCE_FILES_DATA
   src/data/QGearsSerializer.cpp
   src/data/QGearsTexCodec.cpp
   src/data/QGearsTexFile.cpp
-
+  src/data/QGearsTriggersFile.cpp
+  src/data/QGearsMapListFile.cpp
 )
 
 set(SOURCE_FILES
@@ -267,6 +274,8 @@ set(SOURCE_FILES
   src/core/XmlScriptsFile.cpp
   src/core/XmlTextFile.cpp
   src/core/XmlTextsFile.cpp
+  src/core/DialogsManager.cpp
+  src/core/TextManager.cpp
   src/map/QGearsBackground2DFile.cpp
   src/map/QGearsBackground2DFileManager.cpp
   src/map/QGearsBackground2DFileXMLSerializer.cpp
@@ -334,13 +343,22 @@ add_library(QGearsMain STATIC
   ${HEADER_FILES}
   ${SOURCE_FILES}
 )
+
+# Coverage uses more memory, combined with PCH can cause OOM/ICE
+#if ($ENV{COVERAGE}!=1)
+cotire(QGearsMain)
+#endif()
 SET_PROPERTY(TARGET QGearsMain PROPERTY FOLDER "q-gears")
 
 add_library(q-gears-data STATIC
  ${HEADER_FILES_DATA}
  ${SOURCE_FILES_DATA}
  )
-
+add_dependencies(q-gears-data configure_qgears_version)
+# Coverage uses more memory, combined with PCH can cause OOM/ICE
+if ($ENV{COVERAGE}!=1)
+cotire(q-gears-data)
+endif()
 SET_PROPERTY(TARGET q-gears-data PROPERTY FOLDER "q-gears")
 
 
