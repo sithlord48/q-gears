@@ -40,7 +40,8 @@ THE SOFTWARE.
 namespace QGears
 {
     //---------------------------------------------------------------------
-    const String    HRCFile::RESOURCE_TYPE( "QGearsHRCFile" );
+    /*static*/ const String    HRCFile::RESOURCE_TYPE( "QGearsHRCFile" );
+    /*static*/ const float     HRCFile::kDownScaler = 1.0f; //33.0f; TODO fix unit tests before changing me
 
     //---------------------------------------------------------------------
     HRCFile::HRCFile( Ogre::ResourceManager *creator
@@ -82,6 +83,7 @@ namespace QGears
         HRCFileSerializer serializer;
         Ogre::DataStreamPtr stream( Ogre::ResourceGroupManager::getSingleton().openResource( mName, mGroup, true, this ) );
         serializer.importHRCFile( stream, this );
+
 
         const String skeleton_file_name( getSkeletonFileName() );
         Ogre::SkeletonManager &skeleton_manager( Ogre::SkeletonManager::getSingleton() );

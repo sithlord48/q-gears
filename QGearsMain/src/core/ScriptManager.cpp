@@ -343,7 +343,7 @@ ScriptManager::AddEntity(const ScriptManager::Type type, const Ogre::String& ent
         {
             QueueScript script;
             script.function = "on_start";
-            script.priority = 0;
+            script.priority = 1;
             script.state = lua_newthread(m_LuaState);
             // we dont want thread to be garbage collected so we store it
             script.state_id = luaL_ref(m_LuaState, LUA_REGISTRYINDEX);
